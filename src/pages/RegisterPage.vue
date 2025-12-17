@@ -46,6 +46,6 @@ async function submit() {
             type="password"
             placeholder="Password"
         />
-        <button class="full-width" :disabled="blockInputs">Login</button>
+        <button class="full-width" :disabled="blockInputs">Register</button>
     </form>
 </template>
