@@ -4,7 +4,7 @@ import { defineProps } from "vue";
 import { removeTask } from "./stores/tasks";
 import { formatSecondsToHMS } from "./util";
 
-const props = defineProps(["task"]);
+const props = defineProps(["task", "duration-modal"]);
 
 import { ref } from "vue";
 
@@ -14,16 +14,16 @@ const runningTaskId = ref(null);
 const elapsedTime = ref(0);
 let interval = null;
 
-const startNewInstance = (task) => {
-    const estTimeStr = prompt("Enter estimated time in seconds:");
-    const estTime = parseInt(estTimeStr);
+const startNewInstance = async (task) => {
+    const estTime = await props.durationModal.show(
+        "Enter duration",
+        "01:30:00",
+    );
     if (!isNaN(estTime) && estTime > 0) {
         task.startNewInstance(estTime);
         runningTaskId.value = task.id;
         elapsedTime.value = 0;
         startTimer();
-    } else {
-        alert("Invalid input for estimated time.");
     }
 };
 

@@ -1,6 +1,8 @@
 <script setup>
 import { defineProps } from "vue";
 
+import { TrashIcon } from "@heroicons/vue/16/solid";
+
 const props = defineProps(["taskTitle", "taskIcon"]);
 </script>
 
@@ -15,12 +17,14 @@ const props = defineProps(["taskTitle", "taskIcon"]);
                     >{{ taskIcon ? taskIcon : "📝" }} New Task</span
                 >
             </template>
-            <button class="inline danger">X</button>
+            <button disabled class="inline danger" style="font-size: 14px">
+                <TrashIcon class="inline-icon" />
+            </button>
         </h2>
         Avg. estimate: N/A<br />
         Avg. actual: N/A<br />
         Avg. bias: N/A<br />
-        <button>Start Tracking</button>
+        <button disabled class="full-width">Start Tracking</button>
     </div>
 </template>
 

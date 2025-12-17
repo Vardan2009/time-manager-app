@@ -5,11 +5,17 @@ import TaskCard from "@/TaskCard.vue";
 import { store } from "@/stores/tasks";
 import { RouterLink, useRouter } from "vue-router";
 
+import { ref } from "vue";
+
+import TimeDurationModal from "@/TimeDurationModal.vue";
+
 import { getUser, logout } from "@/auth";
 
 const router = useRouter();
 
 let currentUser = await getUser();
+
+const durationModal = ref(null);
 
 const newTaskShortcut = async (e) => {
     console.log(e.ctrlKey, e.shiftKey, e.key);
@@ -50,22 +56,22 @@ const onEnter = (el) => {
 </script>
 
 <template>
-    <div class="flex">
-        <h1>Hello, {{ currentUser.username }}!</h1>
-        <button class="inline" @click="logoutBtn">
+    <div class="flex" style="gap: 30px; flex-wrap: wrap">
+        <h1 class="italic title">Hello, {{ currentUser.username }}!</h1>
+        <button @click="logoutBtn">
             <ArrowLeftEndOnRectangleIcon class="inline-icon" />
+            Log out
         </button>
     </div>
 
-    <div class="flex">
-        <h3>
-            <RectangleStackIcon class="inline-icon" /> Your Tasks
+    <h3><RectangleStackIcon class="inline-icon" /> Your Tasks</h3>
+
+    <RouterLink to="/app/new-task">
+        <button class="full-width">
+            + Add Task
             <span class="italic translucent">(Ctrl+Shift+N)</span>
-        </h3>
-        <RouterLink to="/app/new-task">
-            <button class="inline">+</button>
-        </RouterLink>
-    </div>
+        </button>
+    </RouterLink>
 
     <div v-if="store.tasks.length === 0" class="empty">
         <p class="italic">No tasks yet. Add one to get started!</p>
@@ -77,7 +83,10 @@ const onEnter = (el) => {
                 :key="task.id"
                 :task="task"
                 :data-index="index"
+                :duration-modal="durationModal"
             />
         </TransitionGroup>
     </div>
+
+    <TimeDurationModal ref="durationModal" />
 </template>

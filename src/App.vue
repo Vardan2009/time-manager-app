@@ -22,10 +22,14 @@ const route = useRoute();
 
             <Transition name="slide" mode="out-in">
                 <div :key="route.path">
-                    <router-view></router-view>
+                    <div>
+                        <router-view></router-view>
+                    </div>
                 </div>
             </Transition>
         </div>
+
+        <template #fallback> <h1>Loading...</h1></template>
     </Suspense>
 </template>
 
@@ -101,6 +105,16 @@ button.danger:hover {
     background-color: var(--danger-hover);
 }
 
+button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--accent1-hover);
+}
+
+button[disabled].danger {
+    background-color: var(--danger-hover);
+}
+
 p.danger {
     color: var(--danger);
 }
@@ -132,12 +146,14 @@ a:hover {
 
 .slide-enter-from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(10px) scale(1.01);
+    filter: blur(3px);
 }
 
 .slide-leave-to {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-10px) scale(0.99);
+    filter: blur(3px);
 }
 
 .slide-enter-to,
@@ -178,15 +194,21 @@ button.full-width {
 }
 
 div.floating-corner {
-    position: absolute;
-    bottom: 50px;
-    left: 50px;
-    color: var(--accent1);
     font-size: 14pt;
     font-style: italic;
+    z-index: -10;
 }
 
-.translucid {
+.translucent {
     opacity: 0.6;
+}
+
+* {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+    display: none;
 }
 </style>
