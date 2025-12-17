@@ -98,11 +98,14 @@ div.card {
     border-radius: 8px;
     padding: 15px;
     margin: 15px 0px;
-
     transition: opacity 0.3s ease-in-out;
 }
 
-div.card[disabled] {
+div.card * {
+    transition: opacity 0.3s ease-in-out;
+}
+
+div.card.disabled {
     opacity: 0.5;
 }
 </style>
