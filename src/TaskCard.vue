@@ -8,7 +8,7 @@ const props = defineProps(["task"]);
 
 import { ref } from "vue";
 
-import { ClockIcon } from "@heroicons/vue/16/solid";
+import { ClockIcon, TrashIcon } from "@heroicons/vue/16/solid";
 
 const runningTaskId = ref(null);
 const elapsedTime = ref(0);
@@ -48,8 +48,8 @@ const startTimer = () => {
             <RouterLink :to="`/app/task/${task.id}`"
                 >{{ task.icon }} {{ task.title }}</RouterLink
             >
-            <button class="inline danger" @click="removeTask(task.id)">
-                X
+            <button class="inline danger" style="font-size: 14px;" @click="removeTask(task.id)">
+                <TrashIcon class="inline-icon" />
             </button>
         </h2>
 
@@ -69,7 +69,7 @@ const startTimer = () => {
             Avg. bias: {{ formatSecondsToHMS(task.getAvgTimeBias()) }} ({{
                 task.getAvgTimeBiasPercentage()?.toFixed(1)
             }}%)<br />
-            <button @click="startNewInstance(task)">Start Tracking</button>
+            <button class="full-width" @click="startNewInstance(task)">Start Tracking</button>
         </template>
     </div>
 </template>

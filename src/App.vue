@@ -8,6 +8,14 @@ const route = useRoute();
 <template>
     <Suspense>
         <div class="content-width">
+            <div class="floating-corner">
+                <span class="italic">
+                    <span style="font-weight: 1000;">Work</span>Clock
+                </span>
+                |
+                <a href="https://github.com/Vardan2009/time-manager-app" target="_blank">GitHub</a>
+            </div>
+
             <Transition name="slide" mode="out-in">
                 <div :key="route.path">
                     <router-view></router-view>
@@ -58,6 +66,7 @@ button {
     cursor: pointer;
     padding: 10px 15px;
     margin-top: 10px;
+    font: inherit;
 }
 
 button:hover {
@@ -163,4 +172,14 @@ button.full-width {
     width: 100%;
     font-size: 18px;
 }
+
+div.floating-corner {
+    position: absolute;
+    bottom: 50px;
+    left: 50px;
+    color: var(--accent1);
+    font-size: 14pt;
+    font-style: italic;
+}
+
 </style>
