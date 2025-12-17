@@ -17,7 +17,7 @@ let interval = null;
 const startNewInstance = (task) => {
     const estTimeStr = prompt("Enter estimated time in seconds:");
     const estTime = parseInt(estTimeStr);
-    if (!isNaN(estTime)) {
+    if (!isNaN(estTime) && estTime > 0) {
         task.startNewInstance(estTime);
         runningTaskId.value = task.id;
         elapsedTime.value = 0;
