@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from "vue";
+import { onBeforeUnmount, onMounted } from "vue";
 import { addTask, loadTasks } from "@/stores/tasks";
 import TaskCard from "@/TaskCard.vue";
 import { store } from "@/stores/tasks";
@@ -11,8 +11,20 @@ const router = useRouter();
 
 let currentUser = await getUser();
 
+const newTaskShortcut = async (e) => {
+    if (e.ctrlKey && e.key === "n") {
+        e.preventDefault();
+        await router.push("/app/new-task");
+    }
+};
+
 onMounted(async () => {
     await loadTasks();
+    document.addEventListener("keydown",newTaskShortcut);
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener("keydown", newTaskShortcut);
 });
 
 const logoutBtn = () => {
@@ -46,7 +58,7 @@ const onEnter = (el) => {
     </div>
 
     <div class="flex">
-        <h3><RectangleStackIcon class="inline-icon" /> Your Tasks</h3>
+        <h3><RectangleStackIcon class="inline-icon" /> Your Tasks <span class="italic translucent">(Ctrl+N)</span> </h3>
         <RouterLink to="/app/new-task">
             <button class="inline">+</button>
         </RouterLink>

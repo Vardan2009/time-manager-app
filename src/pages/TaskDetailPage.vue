@@ -2,11 +2,29 @@
 import { useRoute, RouterLink } from "vue-router";
 import { store } from "@/stores/tasks";
 import { formatSecondsToHMS } from "@/util";
+import { onMounted, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const route = useRoute();
 const taskId = parseInt(route.params.id);
 
 const task = store.tasks.find((t) => t.id === taskId);
+
+onMounted(() => {
+    document.addEventListener('keydown', onEsc);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onEsc);
+});
+
+const onEsc = (e) => {
+  if (e.key === "Escape") {
+    router.push("/app");
+  }
+};
 </script>
 
 <template>

@@ -182,4 +182,8 @@ div.floating-corner {
     font-style: italic;
 }
 
+.translucid {
+    opacity: 0.6;
+}
+
 </style>
