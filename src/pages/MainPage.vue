@@ -1,5 +1,6 @@
 <script setup>
-import { addTask } from "@/stores/tasks";
+import { onMounted } from "vue";
+import { addTask, loadTasks } from "@/stores/tasks";
 import TaskCard from "@/TaskCard.vue";
 import { store } from "@/stores/tasks";
 import { RouterLink, useRouter } from "vue-router";
@@ -9,6 +10,10 @@ import { getUser, logout } from "@/auth";
 const router = useRouter();
 
 let currentUser = await getUser();
+
+onMounted(async () => {
+    await loadTasks();
+});
 
 const logoutBtn = () => {
     logout();
@@ -20,9 +25,9 @@ import {
     ArrowLeftEndOnRectangleIcon,
 } from "@heroicons/vue/16/solid";
 
-const btnAddTask = () => {
+const btnAddTask = async () => {
     const taskName = prompt("Enter task name:");
-    if (taskName) addTask(taskName);
+    if (taskName) await addTask(taskName);
 };
 
 const onEnter = (el) => {
@@ -30,6 +35,7 @@ const onEnter = (el) => {
     el.style.transitionDelay = `${index * 0.15}s`;
 };
 </script>
+
 
 <template>
     <div class="flex">

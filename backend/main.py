@@ -2,7 +2,7 @@ import copy
 import datetime
 
 from auth import generate_token, require_auth
-from db import TOKEN_TTL, tokens, users
+from db import TOKEN_TTL, tokens, users, tasks_db
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from passhash import hash_password, verify_password
@@ -75,8 +75,89 @@ def logout():
     return jsonify({"message": "Logged out"})
 
 
-# --------------------
-# Run
-# --------------------
+
+@app.route("/tasks", methods=["GET"])
+@require_auth
+def get_tasks():
+    username = request.user
+    user_tasks = tasks_db.get(username, {})
+    return jsonify({"tasks": list(user_tasks.values())})
+
+
+@app.route("/tasks", methods=["POST"])
+@require_auth
+def create_task():
+    data = request.json or {}
+    username = request.user
+    title = data.get("title")
+    icon = data.get("icon", "📝")
+
+    if not title:
+        return jsonify({"error": "Task title is required"}), 400
+
+    if username not in tasks_db:
+        tasks_db[username] = {}
+
+    task_id = len(tasks_db[username]) + 1
+    task = {
+        "id": task_id,
+        "title": title,
+        "icon": icon,
+        "task_instances": [],
+        "created_at": datetime.datetime.utcnow().isoformat(),
+    }
+
+    tasks_db[username][task_id] = task
+    return jsonify(task), 201
+
+
+@app.route("/tasks/<int:task_id>", methods=["GET"])
+@require_auth
+def get_task(task_id):
+    username = request.user
+    user_tasks = tasks_db.get(username, {})
+    task = user_tasks.get(task_id)
+
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+
+    return jsonify(task)
+
+
+@app.route("/tasks/<int:task_id>", methods=["DELETE"])
+@require_auth
+def delete_task(task_id):
+    username = request.user
+    user_tasks = tasks_db.get(username, {})
+
+    if task_id not in user_tasks:
+        return jsonify({"error": "Task not found"}), 404
+
+    del user_tasks[task_id]
+    return jsonify({"message": "Task deleted"})
+
+
+@app.route("/tasks/<int:task_id>/instances", methods=["POST"])
+@require_auth
+def add_task_instance(task_id):
+    data = request.json or {}
+    username = request.user
+    user_tasks = tasks_db.get(username, {})
+    task = user_tasks.get(task_id)
+
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+
+    instance = {
+        "id": len(task["task_instances"]) + 1,
+        "est_duration_sec": data.get("est_duration_sec", 0),
+        "real_duration_sec": data.get("real_duration_sec", 0),
+        "timestamp_started": data.get("timestamp_started"),
+    }
+
+    task["task_instances"].append(instance)
+    return jsonify(instance), 201
+
+
 if __name__ == "__main__":
     app.run(debug=True)

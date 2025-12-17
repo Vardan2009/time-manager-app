@@ -1,11 +1,11 @@
 import { reactive } from "vue";
+import { apiFetch } from "@/api";
 
 export class TaskInstance {
     constructor(taskId, estDurationSec, realDurationSec, timestampStarted) {
         this.taskId = taskId;
         this.estDurationSec = estDurationSec;
         this.realDurationSec = realDurationSec;
-
         this.timestampStarted = timestampStarted;
     }
 
@@ -20,7 +20,6 @@ export class Task {
         this.title = title;
         this.icon = icon || "📝";
         this.taskInstances = [];
-
         this.currentRunningInstance = undefined;
     }
 
@@ -59,15 +58,6 @@ export class Task {
         return (avgBias / avgEst) * 100;
     }
 
-    addTaskInstance(estDurationSec, realDurationSec) {
-        const newInstance = new TaskInstance(
-            this.id,
-            estDurationSec,
-            realDurationSec,
-        );
-        this.taskInstances.push(newInstance);
-    }
-
     startNewInstance(estDurationSec) {
         const newInstance = new TaskInstance(
             this.id,
@@ -89,13 +79,24 @@ export class Task {
         return 0;
     }
 
-    stopCurrentInstance() {
+    async stopCurrentInstance() {
         if (this.currentRunningInstance) {
             const now = Date.now();
             const elapsedSec = Math.floor(
                 (now - this.currentRunningInstance.timestampStarted) / 1000,
             );
             this.currentRunningInstance.realDurationSec = elapsedSec;
+            
+            // Send to server
+            await apiFetch(`/tasks/${this.id}/instances`, {
+                method: "POST",
+                body: JSON.stringify({
+                    est_duration_sec: this.currentRunningInstance.estDurationSec,
+                    real_duration_sec: elapsedSec,
+                    timestamp_started: this.currentRunningInstance.timestampStarted,
+                }),
+            });
+
             this.taskInstances.push(this.currentRunningInstance);
             this.currentRunningInstance = undefined;
         }
@@ -103,23 +104,52 @@ export class Task {
 }
 
 export const store = reactive({
-    tasks: [
-        new Task(1, "Sample Task 1", "📚"),
-        new Task(2, "Sample Task 2", "🛠️"),
-    ],
+    tasks: [],
 });
 
-export function addTask(title, icon) {
-    const id = store.tasks.length + 1;
-    const newTask = new Task(id, title, icon);
-    store.tasks.push(newTask);
+export async function loadTasks() {
+    try {
+        const data = await apiFetch("/tasks");
+        store.tasks = data.tasks.map(
+            (t) => new Task(t.id, t.title, t.icon)
+        );
+        // Load instances
+        store.tasks.forEach((task) => {
+            const serverTask = data.tasks.find((st) => st.id === task.id);
+            if (serverTask) {
+                task.taskInstances = serverTask.task_instances.map(
+                    (inst) =>
+                        new TaskInstance(
+                            inst.taskId,
+                            inst.est_duration_sec,
+                            inst.real_duration_sec,
+                            inst.timestamp_started,
+                        ),
+                );
+            }
+        });
+    } catch (err) {
+        console.error("Failed to load tasks:", err);
+    }
 }
 
-export function removeTask(id) {
-    store.tasks = store.tasks.filter((task) => task.id !== id);
+export async function addTask(title, icon) {
+    try {
+        const newTask = await apiFetch("/tasks", {
+            method: "POST",
+            body: JSON.stringify({ title, icon: icon || "📝" }),
+        });
+        store.tasks.push(new Task(newTask.id, newTask.title, newTask.icon));
+    } catch (err) {
+        console.error("Failed to add task:", err);
+    }
 }
 
-export function addTaskInstance(id, estDurationSec, realDurationSec) {
-    const task = store.tasks.find((task) => task.id === id);
-    if (task) task.addTaskInstance(estDurationSec, realDurationSec);
+export async function removeTask(id) {
+    try {
+        await apiFetch(`/tasks/${id}`, { method: "DELETE" });
+        store.tasks = store.tasks.filter((task) => task.id !== id);
+    } catch (err) {
+        console.error("Failed to remove task:", err);
+    }
 }
