@@ -1,9 +1,11 @@
 <script setup>
 import { useRoute, RouterLink } from "vue-router";
-import { store } from "@/stores/tasks";
+import { store, updateTaskNote } from "@/stores/tasks";
 import { formatSecondsToHMS } from "@/util";
 import { onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
+
+import { ref } from "vue";
 
 const router = useRouter();
 
@@ -25,6 +27,16 @@ const onEsc = (e) => {
         router.push("/");
     }
 };
+
+const unsavedChanges = ref(false)
+const taskNotesInput = ref(task.notes)
+
+const updateNote = async    () => {
+    unsavedChanges.value = true;
+    await updateTaskNote(task.id, taskNotesInput.value);
+    unsavedChanges.value = false;
+}
+
 </script>
 
 <template>
@@ -48,6 +60,13 @@ const onEsc = (e) => {
             </p>
             <p>Total Instances: {{ task.taskInstances.length }}</p>
         </div>
+
+        <hr />
+        <h3>
+            Task notes
+            <span v-if="unsavedChanges">*</span>
+        </h3>
+        <textarea @change="updateNote" v-model="taskNotesInput" name="task-notes"></textarea>
 
         <hr />
 
@@ -88,4 +107,22 @@ const onEsc = (e) => {
     </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+
+textarea {
+    box-sizing: border-box;
+
+    border: none;
+    width: 100%;
+    height: 300px;
+    resize: vertical;
+
+    background-color: var(--bg-alt);
+    outline: none;
+
+    padding: 30px;
+
+    font: inherit;
+}
+
+</style>

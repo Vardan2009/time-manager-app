@@ -15,11 +15,12 @@ export class TaskInstance {
 }
 
 export class Task {
-    constructor(id, title, icon) {
+    constructor(id, title, icon, notes) {
         this.id = id;
         this.title = title;
         this.icon = icon || "📝";
         this.taskInstances = [];
+        this.notes = notes;
         this.currentRunningInstance = undefined;
     }
 
@@ -112,7 +113,7 @@ export const store = reactive({
 export async function loadTasks() {
     try {
         const data = await apiFetch("/tasks");
-        store.tasks = data.tasks.map((t) => new Task(t.id, t.title, t.icon));
+        store.tasks = data.tasks.map((t) => new Task(t.id, t.title, t.icon, t.task_note));
         // Load instances
         store.tasks.forEach((task) => {
             const serverTask = data.tasks.find((st) => st.id === task.id);
@@ -151,5 +152,21 @@ export async function removeTask(id) {
         store.tasks = store.tasks.filter((task) => task.id !== id);
     } catch (err) {
         console.error("Failed to remove task:", err);
+    }
+}
+
+export async function updateTaskNote(id, newNote) {
+    try {
+        await apiFetch(`/tasks/${id}/note`,
+            {
+                method: "PATCH", 
+                body: JSON.stringify({
+                    note: newNote
+                })
+            }
+        );
+        store.tasks.find(t => t.id === id).notes = newNote;
+    } catch (err) {
+        console.error("Failed to update task note:", err);
     }
 }

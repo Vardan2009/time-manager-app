@@ -18,7 +18,6 @@ let currentUser = await getUser();
 const durationModal = ref(null);
 
 const newTaskShortcut = async (e) => {
-    console.log(e.ctrlKey, e.shiftKey, e.key);
     if (e.ctrlKey && e.key === "N" && e.shiftKey) {
         e.preventDefault();
         await router.push("/new-task");

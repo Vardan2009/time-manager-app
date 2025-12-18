@@ -67,8 +67,6 @@ def user():
 
     del user_data["password_hash"]
 
-    print(user_data)
-
     return user_data
 
 
@@ -109,12 +107,32 @@ def create_task():
         "title": title,
         "icon": icon,
         "task_instances": [],
+        "task_note": "Write your notes here",
         "created_at": datetime.datetime.utcnow().isoformat(),
     }
 
     tasks_db[username][task_id] = task
     return jsonify(task), 201
 
+
+@app.route("/tasks/<int:task_id>/note", methods=["PATCH"])
+@require_auth
+def update_task_note(task_id):
+    username = request.user
+    user_tasks = tasks_db.get(username, {})
+    task = user_tasks.get(task_id)
+
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+
+    data = request.get_json()
+    
+    if not data or "note" not in data:
+        return jsonify({"error": "Missing note"}), 400
+
+    task["task_note"] = data["note"]
+
+    return jsonify({"message": "Note updated", "task": task}), 200
 
 @app.route("/tasks/<int:task_id>", methods=["GET"])
 @require_auth
