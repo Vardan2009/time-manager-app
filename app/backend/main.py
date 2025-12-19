@@ -3,7 +3,7 @@ import datetime
 import os
 
 from auth import generate_token, require_auth
-from db import TOKEN_TTL, tasks_db, tokens, users
+from db import TOKEN_TTL, tasks_db, tokens, users, running_instances
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from passhash import hash_password, verify_password
@@ -16,7 +16,6 @@ ALLOWED_ORIGINS = os.getenv(
 )
 
 CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS.split(",")}})
-
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -126,7 +125,6 @@ def update_task_note(task_id):
         return jsonify({"error": "Task not found"}), 404
 
     data = request.get_json()
-    
     if not data or "note" not in data:
         return jsonify({"error": "Missing note"}), 400
 
@@ -156,13 +154,29 @@ def delete_task(task_id):
     if task_id not in user_tasks:
         return jsonify({"error": "Task not found"}), 404
 
+    if username in running_instances and task_id in running_instances[username]:
+        instance = running_instances[username][task_id]
+        started_at = datetime.datetime.fromisoformat(instance["started_at"])
+        elapsed_sec = int((datetime.datetime.utcnow() - started_at).total_seconds())
+
+        task = user_tasks[task_id]
+        new_instance = {
+            "id": len(task["task_instances"]) + 1,
+            "est_duration_sec": instance["est_duration_sec"],
+            "real_duration_sec": elapsed_sec,
+            "timestamp_started": instance["started_at"],
+        }
+        task["task_instances"].append(new_instance)
+        
+        del running_instances[username][task_id]
+
     del user_tasks[task_id]
     return jsonify({"message": "Task deleted"})
 
 
-@app.route("/tasks/<int:task_id>/instances", methods=["POST"])
+@app.route("/tasks/<int:task_id>/instances/start", methods=["POST"])
 @require_auth
-def add_task_instance(task_id):
+def start_task_instance(task_id):
     data = request.json or {}
     username = request.user
     user_tasks = tasks_db.get(username, {})
@@ -171,15 +185,68 @@ def add_task_instance(task_id):
     if not task:
         return jsonify({"error": "Task not found"}), 404
 
-    instance = {
-        "id": len(task["task_instances"]) + 1,
+    if username not in running_instances:
+        running_instances[username] = {}
+
+    running_instances[username][task_id] = {
         "est_duration_sec": data.get("est_duration_sec", 0),
-        "real_duration_sec": data.get("real_duration_sec", 0),
-        "timestamp_started": data.get("timestamp_started"),
+        "started_at": datetime.datetime.utcnow().isoformat(),
     }
 
-    task["task_instances"].append(instance)
-    return jsonify(instance), 201
+    return jsonify({
+        "task_id": task_id,
+        "est_duration_sec": data.get("est_duration_sec", 0),
+        "started_at": running_instances[username][task_id]["started_at"],
+    }), 201
+
+
+@app.route("/tasks/<int:task_id>/instances/elapsed", methods=["GET"])
+@require_auth
+def get_elapsed_time(task_id):
+    username = request.user
+    
+    if username not in running_instances or task_id not in running_instances[username]:
+        return jsonify({"error": "No running instance"}), 404
+
+    instance = running_instances[username][task_id]
+    started_at = datetime.datetime.fromisoformat(instance["started_at"])
+    elapsed_sec = int((datetime.datetime.utcnow() - started_at).total_seconds())
+
+    return jsonify({
+        "task_id": task_id,
+        "elapsed_sec": elapsed_sec,
+        "est_duration_sec": instance["est_duration_sec"],
+    })
+
+
+@app.route("/tasks/<int:task_id>/instances/stop", methods=["POST"])
+@require_auth
+def stop_task_instance(task_id):
+    username = request.user
+    user_tasks = tasks_db.get(username, {})
+    task = user_tasks.get(task_id)
+
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+
+    if username not in running_instances or task_id not in running_instances[username]:
+        return jsonify({"error": "No running instance"}), 404
+
+    instance = running_instances[username][task_id]
+    started_at = datetime.datetime.fromisoformat(instance["started_at"])
+    elapsed_sec = int((datetime.datetime.utcnow() - started_at).total_seconds())
+
+    new_instance = {
+        "id": len(task["task_instances"]) + 1,
+        "est_duration_sec": instance["est_duration_sec"],
+        "real_duration_sec": elapsed_sec,
+        "timestamp_started": instance["started_at"],
+    }
+
+    task["task_instances"].append(new_instance)
+    del running_instances[username][task_id]
+
+    return jsonify(new_instance), 201
 
 
 if __name__ == "__main__":

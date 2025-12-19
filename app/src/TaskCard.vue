@@ -1,20 +1,33 @@
 <script setup>
-import { defineProps } from "vue";
+import { defineProps, ref, onMounted, onBeforeUnmount } from "vue";
 
 import { removeTask } from "./stores/tasks";
 import { formatSecondsToHMS } from "./util";
 
 const props = defineProps(["task", "duration-modal"]);
 
-import { ref } from "vue";
-
 import { ClockIcon, TrashIcon } from "@heroicons/vue/16/solid";
+import { apiFetch } from "./api";
 
 const runningTaskId = ref(null);
+const estDuration = ref(0);
 const elapsedTime = ref(0);
 let interval = null;
 
 const gettingDeleted = ref(false);
+
+const checkRunningInstance = async () => {
+    try {
+        const data = await apiFetch(`/tasks/${props.task.id}/instances/elapsed`);
+        runningTaskId.value = props.task.id;
+        estDuration.value = data.est_duration_sec;
+        elapsedTime.value = data.elapsed_sec;
+        startTimer(props.task.id);
+    } catch (err) {
+        // No running instance
+        runningTaskId.value = null;
+    }
+};
 
 const startNewInstance = async (task) => {
     const estTime = await props.durationModal.show(
@@ -22,26 +35,58 @@ const startNewInstance = async (task) => {
         "01:30:00",
     );
     if (!isNaN(estTime) && estTime > 0) {
-        task.startNewInstance(estTime);
-        runningTaskId.value = task.id;
-        elapsedTime.value = 0;
-        startTimer();
+        try {
+            await apiFetch(`/tasks/${task.id}/instances/start`, {
+                method: "POST",
+                body: JSON.stringify({ est_duration_sec: estTime }),
+            });
+            runningTaskId.value = task.id;
+            estDuration.value = estTime;
+            elapsedTime.value = 0;
+            startTimer(task.id);
+        } catch (err) {
+            console.error("Failed to start instance:", err);
+        }
     }
 };
 
-const stopInstance = (task) => {
-    task.stopCurrentInstance();
-    clearInterval(interval);
-    runningTaskId.value = null;
-    elapsedTime.value = 0;
+const stopInstance = async (task) => {
+    try {
+        await apiFetch(`/tasks/${task.id}/instances/stop`, {
+            method: "POST",
+        });
+        clearInterval(interval);
+        runningTaskId.value = null;
+        estDuration.value = 0;
+        elapsedTime.value = 0;
+        // Reload tasks to update the UI
+        const { loadTasks } = await import("./stores/tasks");
+        await loadTasks();
+    } catch (err) {
+        console.error("Failed to stop instance:", err);
+    }
 };
 
-const startTimer = () => {
+const startTimer = (taskId) => {
     if (interval) clearInterval(interval);
-    interval = setInterval(() => {
-        elapsedTime.value++;
+    interval = setInterval(async () => {
+        try {
+            const data = await apiFetch(`/tasks/${taskId}/instances/elapsed`);
+            elapsedTime.value = data.elapsed_sec;
+        } catch (err) {
+            console.error("Failed to get elapsed time:", err);
+            clearInterval(interval);
+        }
     }, 1000);
 };
+
+onMounted(() => {
+    checkRunningInstance();
+});
+
+onBeforeUnmount(() => {
+    if (interval) clearInterval(interval);
+});
 </script>
 
 <template>
@@ -65,11 +110,9 @@ const startTimer = () => {
             </button>
         </h2>
 
-        <template
-            v-if="runningTaskId === task.id && task.currentRunningInstance"
-        >
+        <template v-if="runningTaskId === task.id">
             <ClockIcon class="inline-icon" /> Running... Estimated:
-            {{ formatSecondsToHMS(task.currentRunningInstance.estDurationSec) }}
+            {{ formatSecondsToHMS(estDuration) }}
             Elapsed: {{ formatSecondsToHMS(elapsedTime) }}<br />
             <button class="danger full-width" @click="stopInstance(task)">
                 Complete Task
