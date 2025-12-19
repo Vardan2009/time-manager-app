@@ -16,9 +16,15 @@ const task = store.tasks.find((t) => t.id === taskId);
 
 let debounceTimeout = null;
 
+const taskNotesInput = ref("")
+
 onMounted(() => {
-    if(!task) 
+    if(!task)  {
         router.push("/");
+        return;
+    }
+
+    taskNotesInput.value = task.notes || "";
     
     document.addEventListener("keydown", onEsc);
 });
@@ -36,7 +42,8 @@ const onEsc = (e) => {
 
 const unsavedChanges = ref(false)
 const savingChanges = ref(false)
-const taskNotesInput = ref(task.task_note)
+
+
 
 const updateNote = () => {
     unsavedChanges.value = true;
