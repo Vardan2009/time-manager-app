@@ -15,6 +15,9 @@ const taskId = parseInt(route.params.id);
 const task = store.tasks.find((t) => t.id === taskId);
 
 onMounted(() => {
+    if(!task) 
+        router.push("/");
+    
     document.addEventListener("keydown", onEsc);
 });
 
