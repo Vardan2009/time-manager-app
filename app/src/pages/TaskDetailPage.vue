@@ -106,18 +106,18 @@ const updateNote = () => {
                 <strong>Instance {{ index + 1 }}</strong>
                 <p>
                     Started:
-                    {{ new Date(instance.timestamp_started).toLocaleString() }}
+                    {{ new Date(instance.timestampStarted).toLocaleString() }}
                 </p>
                 <p>
-                    Estimated: {{ formatSecondsToHMS(instance.est_duration_sec) }}
+                    Estimated: {{ formatSecondsToHMS(instance.estDurationSec) }}
                 </p>
                 <p>
-                    Actual: {{ formatSecondsToHMS(instance.real_duration_sec) }}
+                    Actual: {{ formatSecondsToHMS(instance.realDurationSec) }}
                 </p>
                 <p>
                     Bias: {{ formatSecondsToHMS(instance.getTimeBias()) }} ({{
                         (
-                            (instance.getTimeBias() / instance.est_duration_sec) *
+                            (instance.getTimeBias() / instance.estDurationSec) *
                             100
                         ).toFixed(1)
                     }}%)
