@@ -1,0 +1,132 @@
+@import url("https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root,
+.light {
+  --bg: #e8e8e8;
+  --bg-alt: #ffffff;
+
+  --fg: #333;
+
+  --accent1: #4e598c;
+  --accent1-hover: #3b4470;
+
+  --accent2: #ff8c42;
+  --accent2-hover: #e67624;
+
+  --danger: #ff4c4c;
+  --danger-hover: #e63b3b;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: Arial, sans-serif;
+  margin: 0;
+
+  font-family: "Funnel Display", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+
+  user-select: none;
+}
+
+.big-title {
+  font-size: 72px;
+}
+
+div#landing-div {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  min-height: 75dvh;
+}
+
+div#landing-div > div {
+  width: 50%;
+}
+
+div#landing-div > img {
+  height: 500px;
+}
+
+a.button {
+  display: inline-block;
+  background-color: var(--accent1);
+  border: none;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+  padding: 10px 15px;
+  font: inherit;
+}
+
+a.button:hover {
+  background-color: var(--accent1-hover);
+}
+
+div.buttons {
+  flex-wrap: wrap;
+  margin: 30px 0px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media screen and (max-width: 750px) {
+  div#landing-div > div {
+    width: 90%;
+  }
+
+  header {
+    display: block !important;
+  }
+}
+
+.icon-mask {
+  width: 150px;
+  height: 50px;
+  mask-size: contain;
+  mask-position: center;
+  mask-image: url("assets/workclock-white.png");
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("assets/workclock-white.png");
+  -webkit-mask-repeat: no-repeat;
+  background-color: var(--fg);
+}
+
+header {
+  padding: 30px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+a {
+  text-decoration: none;
+}
+
+a.link {
+  color: var(--accent1);
+}
+
+a.link:hover {
+  color: var(--accent1-hover);
+}
+
+footer {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0px;
+}
+
+footer div#footer-content {
+  width: 90%;
+}
